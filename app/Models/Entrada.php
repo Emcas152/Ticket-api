@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Entrada extends Model
+{
+    protected $table = 'entrada';
+    protected $guarded = [];
+    public $timestamps = false;
+}
