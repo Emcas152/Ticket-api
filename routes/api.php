@@ -1,22 +1,37 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReservationController;
-use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SeatController;
 use App\Http\Controllers\TicketController;
+use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
-    Route::get('events', function() { return response()->json(['message'=>'Lista de eventos (implementar)']); });
-    Route::get('events/{id}', function($id) { return response()->json(['message'=>"Evento $id (implementar)"]); });
+Route::prefix('auth')->group(function (): void {
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('login', [AuthController::class, 'login']);
 
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('seats/{seat}/reserve', [ReservationController::class, 'reserveSeat']);
-        Route::get('user/tickets', [TicketController::class, 'listUserTickets']);
+    Route::middleware('jwt.auth')->group(function (): void {
+        Route::post('logout', [AuthController::class, 'logout']);
     });
+});
 
-    Route::post('payments/webhook', [PaymentWebhookController::class, 'webhook']);
+Route::get('events', [EventController::class, 'index']);
+Route::get('events/{event}', [EventController::class, 'show']);
+Route::get('events/{event}/seats', [SeatController::class, 'index']);
 
-    Route::middleware(['auth:sanctum','can:authorizer'])->group(function () {
-        Route::post('authorizer/validate', [TicketController::class, 'validateTicket']);
-    });
+Route::middleware('jwt.auth')->group(function (): void {
+    Route::post('seats/reserve', [SeatController::class, 'reserve']);
+    Route::post('bookings', [BookingController::class, 'store']);
+    Route::post('payments', [PaymentController::class, 'store']);
+    Route::get('tickets', [TicketController::class, 'index']);
+    Route::get('tickets/{ticket}/download', [TicketController::class, 'download']);
+});
+
+Route::middleware(['jwt.auth', 'role:admin,organizer'])->group(function (): void {
+    Route::post('events', [EventController::class, 'store']);
+    Route::put('events/{event}', [EventController::class, 'update']);
+    Route::patch('events/{event}', [EventController::class, 'update']);
+    Route::delete('events/{event}', [EventController::class, 'destroy']);
 });

@@ -2,44 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TicketResource;
+use App\Models\Ticket;
+use App\Services\TicketService;
 use Illuminate\Http\Request;
-use App\Models\Entrada;
-use App\Models\AccesoRegistro;
+use Illuminate\Support\Facades\Storage;
 
 class TicketController extends Controller
 {
-    public function listUserTickets(Request $request)
-    {
-        $user = $request->user();
-        $tickets = Entrada::where('comprador_id', $user->id)->get();
-        return response()->json($tickets);
+    public function __construct(
+        private readonly TicketService $tickets,
+    ) {
     }
 
-    public function validateTicket(Request $request)
+    public function index(Request $request)
     {
-        $ticketCode = $request->input('codigo_qr');
-        $authorizer = $request->user();
+        return $this->success(TicketResource::collection($this->tickets->listForUser($request->user()->id)));
+    }
 
-        $entrada = Entrada::where('codigo_qr', $ticketCode)->first();
-        if (!$entrada) {
-            return response()->json(['result' => 'denegado', 'reason' => 'no existe'], 404);
+    public function download(Request $request, Ticket $ticket)
+    {
+        $ownedTicket = $this->tickets->findOwnedTicket($ticket->id, $request->user()->id);
+
+        if (! $ownedTicket->pdf_path || ! Storage::disk('public')->exists($ownedTicket->pdf_path)) {
+            abort(404, 'Ticket PDF not found.');
         }
 
-        if ($entrada->estado !== 'emitida') {
-            return response()->json(['result' => 'denegado', 'reason' => 'estado no válido'], 409);
-        }
-
-        $entrada->estado = 'usada';
-        $entrada->fecha_utilizado = now();
-        $entrada->save();
-
-        AccesoRegistro::create([
-            'entrada_id' => $entrada->id,
-            'autorizado_por' => $authorizer->id,
-            'resultado' => 'permitido',
-            'fecha_acceso' => now(),
-        ]);
-
-        return response()->json(['result' => 'permitido']);
+        return Storage::disk('public')->download($ownedTicket->pdf_path, 'ticket-'.$ownedTicket->id.'.pdf');
     }
 }
