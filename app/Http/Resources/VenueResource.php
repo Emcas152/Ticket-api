@@ -20,6 +20,15 @@ class VenueResource extends JsonResource
                 'lng' => $this->lng,
             ],
             'seat_map_config' => $this->seat_map_config,
+            'sections' => $this->whenLoaded('sections', fn () => $this->sections->map(fn ($section) => [
+                'id' => $section->id,
+                'name' => $section->name,
+                'code' => $section->code,
+                'map_config' => $section->map_config,
+                'seats' => $section->relationLoaded('seats')
+                    ? SeatResource::collection($section->seats)->resolve()
+                    : [],
+            ])->values()->all()),
         ];
     }
 }

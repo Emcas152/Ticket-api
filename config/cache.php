@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'default' => env('CACHE_STORE', 'array'),
+    'default' => env('CACHE_STORE', 'file'),
 
     'stores' => [
         'array' => [
@@ -11,6 +11,10 @@ return [
         'file' => [
             'driver' => 'file',
             'path' => storage_path('framework/cache/data'),
+        ],
+        'redis' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
         ],
     ],
 

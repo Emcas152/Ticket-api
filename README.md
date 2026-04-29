@@ -67,9 +67,14 @@ Usuarios creados:
 - `organizer@tickets.test / Password123!`
 - `user@tickets.test / Password123!`
 
-Evento demo:
+Datos creados:
 
 - `Rock Night 2026`
+- `Tech Conference 2026`
+- `Indie Sunset Fest`
+- 2 venues con secciones y asientos
+- 1 booking confirmado con pago `paid` y tickets emitidos
+- 1 booking en estado `reserved`
 
 ## Flujo básico
 
