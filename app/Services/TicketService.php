@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class TicketService
 {
@@ -28,10 +29,24 @@ class TicketService
         return $this->tickets->findOwnedTicket($ticketId, $userId);
     }
 
+    public function markAsUsed(Ticket $ticket): Ticket
+    {
+        if ($ticket->status !== 'issued') {
+            throw new HttpException(409, 'Ticket is not active.');
+        }
+
+        $ticket->update([
+            'status' => 'used',
+            'used_at' => now(),
+        ]);
+
+        return $ticket->fresh(['seat.section', 'booking.event.venue']);
+    }
+
     public function issueForBooking(Booking $booking): Collection
     {
         $booking->loadMissing(['event.venue', 'seats.section']);
-        $issued = collect();
+        $issued = new Collection();
 
         foreach ($booking->seats as $seat) {
             $ticket = $this->tickets->findByBookingAndSeat($booking, $seat->id);

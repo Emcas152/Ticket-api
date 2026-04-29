@@ -30,6 +30,10 @@ Route::middleware('jwt.auth')->group(function (): void {
 });
 
 Route::middleware(['jwt.auth', 'role:admin,organizer'])->group(function (): void {
+    Route::post('tickets/{ticket}/use', [TicketController::class, 'use']);
+});
+
+Route::middleware(['jwt.auth', 'role:admin,organizer'])->group(function (): void {
     Route::post('events', [EventController::class, 'store']);
     Route::put('events/{event}', [EventController::class, 'update']);
     Route::patch('events/{event}', [EventController::class, 'update']);
